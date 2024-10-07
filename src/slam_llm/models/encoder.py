@@ -21,6 +21,7 @@ class WhisperWrappedEncoder:
 
             # assert x.shape[1:] == self.positional_embedding.shape, "incorrect audio shape"
             # x = (x + self.positional_embedding).to(x.dtype)
+            # 这里为了兼容whisper, 应当填充到定长的30s
             x = (x + self.positional_embedding[: x.shape[1]]).to(x.dtype)
 
             for block in self.blocks:

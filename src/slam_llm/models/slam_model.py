@@ -378,6 +378,7 @@ class slam_model(nn.Module):
             modality_mask_start_indices = (modality_mask == True).float().argmax(dim=1)
             modality_lengths = torch.clamp(modality_mask.sum(dim=1), max=encoder_outs.shape[1]).tolist()
 
+            # 把语音填充到文本的合适位置
             encoder_outs_pad = torch.zeros_like(inputs_embeds)
             for i in range(encoder_outs.shape[0]):
                 encoder_outs_pad[
