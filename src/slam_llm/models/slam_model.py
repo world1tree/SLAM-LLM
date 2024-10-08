@@ -149,6 +149,7 @@ def setup_llm(train_config, model_config, **kwargs):
                     load_in_8bit=True if train_config.quantization else None,
                     device_map="auto" if train_config.quantization else None,
                     use_cache=use_cache,
+                    low_cpu_mem_usage=True,
                 )
         else:
             llama_config = AutoConfig.from_pretrained(model_config.llm_path)
@@ -180,6 +181,7 @@ def setup_llm(train_config, model_config, **kwargs):
                 load_in_8bit=True if train_config.quantization else None,
                 device_map="auto" if train_config.quantization else None,
                 use_cache=use_cache,
+                low_cpu_mem_usage=True,
             )
     if (train_config.enable_fsdp or train_config.enable_ddp) and train_config.use_fast_kernels:
         """
