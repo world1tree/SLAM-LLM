@@ -1,6 +1,5 @@
 #!/bin/bash
-# export PYTHONPATH=/root/whisper:$PYTHONPATH
-export PYTHONPATH=/root/fairseq:$PYTHONPATH
+# export PYTHONPATH=/root/fairseq:$PYTHONPATH
 export CUDA_VISIBLE_DEVICES=0,1
 export TOKENIZERS_PARALLELISM=false
 # export CUDA_LAUNCH_BLOCKING=1
@@ -11,33 +10,37 @@ export OMP_NUM_THREADS=1
 # export NCCL_DEBUG_SUBSYS=ALL
 # export TORCH_DISTRIBUTED_DEBUG=INFO
 
-run_dir=/root/SLAM-LLM
+run_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM
 cd $run_dir
-code_dir=examples/asr_librispeech
+code_dir=examples/sttr
 
-speech_encoder_path=/nfs/maziyang.mzy/models/wavlm/WavLM-Large.pt
-llm_path=/nfs/maziyang.mzy/models/vicuna-7b-v1.5
+speech_encoder_path=/public/home/zhxgong/.cache/whisper/tiny.en.pt
+# llm_path=/public/home/zhxgong/mzlv/llama3/8B-Instruct
+llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
 train_data_path=/nfs/maziyang.mzy/data/librispeech/librispeech_train_960h.jsonl
 val_data_path=/nfs/maziyang.mzy/data/librispeech/librispeech_dev_other.jsonl
 
-output_dir=/root/tmp/vicuna-7b-v1.5-librispeech-linear-steplrwarmupkeep1e-4-wavlm-large-$(date +"%Y%m%d")
+output_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM/examples/sttr/output/whisper-linear-llama3-$(date +"%Y%m%d")
+
+ds_rate=5
 
 hydra_args="
 hydra.run.dir=$output_dir \
-++model_config.llm_name=vicuna-7b-v1.5 \
+++model_config.llm_name=gemma2 \
 ++model_config.llm_path=$llm_path \
-++model_config.llm_dim=4096 \
-++model_config.encoder_name=wavlm \
-++model_config.normalize=true \
-++dataset_config.normalize=true \
-++model_config.encoder_projector_ds_rate=5 \
+++model_config.llm_dim=2048 \
+++model_config.encoder_name=whisper \
+++model_config.encoder_projector_ds_rate=$ds_rate \
 ++model_config.encoder_path=$speech_encoder_path \
-++model_config.encoder_dim=1024 \
+++model_config.encoder_dim=384 \
 ++model_config.encoder_projector=linear \
 ++dataset_config.dataset=speech_dataset \
 ++dataset_config.train_data_path=$train_data_path \
 ++dataset_config.val_data_path=$val_data_path \
-++dataset_config.input_type=raw \
+++dataset_config.input_type=mel \
+++dataset_config.mel_size=128 \
+++dataset_config.ds_rate=$ds_rate \
+++dataset_config.audio_root=xxx \
 ++train_config.model_name=asr \
 ++train_config.num_epochs=3 \
 ++train_config.freeze_encoder=true \
@@ -51,6 +54,7 @@ hydra.run.dir=$output_dir \
 ++train_config.val_batch_size=4 \
 ++train_config.num_workers_dataloader=2 \
 ++train_config.output_dir=$output_dir \
+++log_config.log_file=$output_dir/log.txt \
 ++metric=acc \
 "
 
@@ -58,7 +62,6 @@ hydra.run.dir=$output_dir \
 if [[ $CUDA_VISIBLE_DEVICES != *","* ]]; then
     python -m debugpy --listen 5678 --wait-for-client $code_dir/finetune_asr.py \
         --config-path "conf" \
-        --config-name "prompt.yaml" \
         $hydra_args
 else
     torchrun \
@@ -67,7 +70,6 @@ else
         --master_port=29503 \
         $code_dir/finetune_asr.py \
         --config-path "conf" \
-        --config-name "prompt.yaml" \
         ++train_config.enable_fsdp=false \
         ++train_config.enable_ddp=true \
         ++train_config.use_fp16=true \

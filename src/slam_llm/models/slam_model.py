@@ -365,6 +365,7 @@ class slam_model(nn.Module):
                 encoder_outs = self.encoder_projector(encoder_outs)
 
         if input_ids is not None:
+            # 防止语音报错
             input_ids[input_ids == -1] = 0
             if isinstance(self.llm, T5ForConditionalGeneration):
                 inputs_embeds = self.llm.shared(input_ids)
@@ -378,6 +379,8 @@ class slam_model(nn.Module):
 
         if modality_mask is not None:
             modality_mask_start_indices = (modality_mask == True).float().argmax(dim=1)
+            # 需要clamp来限制确保语音的长度没有超过encoder_outs的长度
+            # 应该不会超过，因为语音本身就是有许多填充值
             modality_lengths = torch.clamp(modality_mask.sum(dim=1), max=encoder_outs.shape[1]).tolist()
 
             encoder_outs_pad = torch.zeros_like(inputs_embeds)

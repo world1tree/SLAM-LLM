@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 @dataclass
 class ModelConfig:
-    file: str = "examples/asr_librispeech/model/slam_model_asr.py:model_factory"
-    llm_name: str = "vicuna-13b-v1.5"
-    llm_path: str = "PATH/to/LLAMA/7B"
+    file: str = "examples/sttr/model/slam_model_sttr.py:model_factory"
+    llm_name: str = "llama3-8B"
+    llm_path: str = "PATH/to/LLAMA3/8B"
     llm_type: str = "decoder_only"
     llm_dim: int = 4096
     encoder_name: Optional[str] = None
@@ -82,7 +82,7 @@ class TrainConfig:
 @dataclass
 class DataConfig:
     dataset: str = "speech_dataset"
-    file: str = "src/slam_llm/datasets/speech_dataset.py:get_speech_dataset"
+    file: str = "src/slam_llm/datasets/sttr_dataset.py:get_sttr_dataset"
     train_data_path: Optional[str] = None
     val_data_path: Optional[str] = None
     train_split: str = "train"
@@ -102,6 +102,8 @@ class DataConfig:
     normalize: Optional[bool] = field(default=False, metadata={
         "help": "whether input is normalized, used for models such as wavlm"
     })
+    ds_rate: int = 5 # same as model_config.encoder_projector_ds_rate
+    audio_root: str = None # root dir of audio
 
 @dataclass
 class FSDPConfig:

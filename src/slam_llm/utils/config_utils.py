@@ -95,11 +95,11 @@ def get_dataloader_kwargs(train_config, dataset, tokenizer, mode):
             # raise ValueError(f"Unknown batching strategy: {train_config.batching_strategy}")
             if train_config.enable_fsdp or train_config.enable_ddp or train_config.enable_deepspeed:
                 kwargs["sampler"] = DistributedSampler(
-                dataset,
-                rank=dist.get_rank(),
-                num_replicas=dist.get_world_size(),
-                shuffle=mode=="train",
-            )
+                    dataset,
+                    rank=dist.get_rank(),
+                    num_replicas=dist.get_world_size(),
+                    shuffle=mode=="train",
+                )
             kwargs["batch_size"] = batch_size
             kwargs["drop_last"] = True
             kwargs["collate_fn"] = dataset.collator

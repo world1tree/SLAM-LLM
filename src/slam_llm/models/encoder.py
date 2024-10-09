@@ -19,9 +19,10 @@ class WhisperWrappedEncoder:
             x = F.gelu(self.conv2(x))
             x = x.permute(0, 2, 1)
 
-            # assert x.shape[1:] == self.positional_embedding.shape, "incorrect audio shape"
-            # x = (x + self.positional_embedding).to(x.dtype)
-            x = (x + self.positional_embedding[: x.shape[1]]).to(x.dtype)
+            assert x.shape[1:] == self.positional_embedding.shape, "incorrect audio shape"
+            x = (x + self.positional_embedding).to(x.dtype)
+            # 这里虽然看起来好像是变长的，但实际上在输入端已经强制填充到30s了
+            # x = (x + self.positional_embedding[: x.shape[1]]).to(x.dtype)
 
             for block in self.blocks:
                 x = block(x)

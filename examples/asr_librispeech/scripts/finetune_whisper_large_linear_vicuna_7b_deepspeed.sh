@@ -79,7 +79,7 @@ deepspeed \
 
 # -m debugpy --listen 5678 --wait-for-client
 # if [[ $CUDA_VISIBLE_DEVICES != *","* ]]; then
-#     python -m debugpy --listen 5678 --wait-for-client finetune_asr.py \
+#     python -m debugpy --listen 5678 --wait-for-client finetune_sttr.py \
 #         $hydra_args
 # else
 #     deepspeed \
