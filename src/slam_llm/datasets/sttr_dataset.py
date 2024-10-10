@@ -45,7 +45,7 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
         if self.split == "train":
             data_path = dataset_config.train_data_path
         else:
-            data_path = dataset_config.valid_data_path
+            data_path = dataset_config.val_data_path
 
         with open(data_path, encoding='utf-8') as fin:
             for line in fin:
@@ -58,8 +58,7 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
     def __getitem__(self, index):
         data_dict = self.data_list[index]
         audio = data_dict.get("audio")
-        if self.audio_root is not None:
-            audio = osp.join(self.audio_root, audio)
+        audio = osp.join(self.audio_root, audio)
         audio_path, frame_start, frame_offset = audio.split(':')
         frame_start = int(frame_start)
         frame_offset = int(frame_offset)
@@ -92,6 +91,7 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
         # for debug
         if self.split == "train" and index == 0 or index == 1:
             print(f"prompt-{index}: {prompt}")
+            print('-'*10)
         prompt_ids = self.tokenizer.encode(prompt)
         prompt_length = len(prompt_ids)
 

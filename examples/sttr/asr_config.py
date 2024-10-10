@@ -103,7 +103,7 @@ class DataConfig:
         "help": "whether input is normalized, used for models such as wavlm"
     })
     ds_rate: int = 5 # same as model_config.encoder_projector_ds_rate
-    audio_root: str = None # root dir of audio
+    audio_root: str = "" # root dir of audio
 
 @dataclass
 class FSDPConfig:
