@@ -58,6 +58,8 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
     def __getitem__(self, index):
         data_dict = self.data_list[index]
         audio = data_dict.get("audio")
+        key = data_dict.get("key")
+
         audio = osp.join(self.audio_root, audio)
         audio_path, frame_start, frame_offset = audio.split(':')
         frame_start = int(frame_start)
@@ -109,6 +111,7 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
                 "audio_length": audio_length,
                 "target": answer,
                 "prompt_length": prompt_length,
+                "key": key,
             }
 
         answer = self.answer_template.format(answer)
@@ -244,6 +247,7 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
             modality_mask[index, padding_left:padding_left+samples[index]["audio_length"]] = True
 
         if self.inference_mode:
+            keys = [s['key'] for s in samples]
             targets = [s['target'] for s in samples]
 
             return {
@@ -254,7 +258,8 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
                 "audio_mel": audio_mel if self.input_type == "mel" else None,
                 "audio_mel_post_mask": audio_mel_post_mask if self.input_type == "mel" else None,
                 "modality_mask": modality_mask,
-                "targets": targets
+                "targets": targets,
+                "keys": keys,
             }
 
         labels = torch.stack([
