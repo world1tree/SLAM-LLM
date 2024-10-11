@@ -1,4 +1,5 @@
 # import fire
+import json
 import random
 import torch
 import logging
@@ -126,7 +127,8 @@ def main(kwargs: DictConfig):
 	logger.info("=====================================")
 	pred_path = kwargs.get('decode_log') + "_pred"
 	gt_path = kwargs.get('decode_log') + "_gt"
-	with open(pred_path, "w") as pred, open(gt_path, "w") as gt:
+	result_path = kwargs.get('decode_log') + "_result"
+	with open(pred_path, "w") as pred, open(gt_path, "w") as gt, open(result_path, "w") as result:
 		for step, batch in tqdm(enumerate(test_dataloader), total=len(test_dataloader)):
 			for key in batch.keys():
 				batch[key] = batch[key].to(device) if isinstance(batch[key], torch.Tensor) else batch[key]
@@ -135,6 +137,14 @@ def main(kwargs: DictConfig):
 			for key, text, target in zip(batch["keys"], output_text, batch["targets"]):
 				pred.write(key + "\t" + text.replace("\n", " ") + "\n")
 				gt.write(key + "\t" + target + "\n")
+
+				item = {
+					'key': key,
+					'text': text.strip(),
+					'target': target.strip(),
+				}
+				result.write(json.dumps(item) + "\n")
+
 
 
 if __name__ == "__main__":
