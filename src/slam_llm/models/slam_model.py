@@ -441,7 +441,7 @@ class slam_model(nn.Module):
             # max_length=kwargs.get("max_length", 200),
             max_new_tokens=kwargs.get("max_new_tokens", 1024),
             num_beams=kwargs.get("num_beams", 3),
-            do_sample=kwargs.get("do_sample", False),
+            do_sample=kwargs.get("do_sample", True),
             min_length=kwargs.get("min_length", 1),
             top_k=kwargs.get("top_k", 50),
             top_p=kwargs.get("top_p", 0.7),
