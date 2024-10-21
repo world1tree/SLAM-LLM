@@ -1,8 +1,7 @@
 #!/bin/bash
 # export PYTHONPATH=/root/whisper:$PYTHONPATH
-export PYTHONPATH=/root/fairseq:$PYTHONPATH
-# export CUDA_VISIBLE_DEVICES=6,7
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+#export PYTHONPATH=/root/fairseq:$PYTHONPATH
+export CUDA_VISIBLE_DEVICES=0,1
 export TOKENIZERS_PARALLELISM=false
 # export CUDA_LAUNCH_BLOCKING=1
 export OMP_NUM_THREADS=1
@@ -12,34 +11,39 @@ export OMP_NUM_THREADS=1
 # export NCCL_DEBUG_SUBSYS=ALL
 # export TORCH_DISTRIBUTED_DEBUG=INFO
 
-run_dir=/work/SLAM-LLM
+run_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM
 cd $run_dir
-code_dir=examples/asr_librispeech
+code_dir=examples/sttr
 
-speech_encoder_path=/cxgroup/model/whisper/large-v3.pt
+speech_encoder_path=/public/home/zhxgong/.cache/whisper/large-v3.pt
 
-llm_path=/cxgroup/model/vicuna-7b-v1.5
+llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
 # llm_path=/nfs/maziyang.mzy/models/vicuna-13b-v1.5
+train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-train.jsonl
+val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-valid.jsonl
 
-output_dir=/work/exps/vicuna-7b-v1.5-librispeech-linear-steplrwarmupkeep1e-4-whisper-largev3-$(date +"%Y%m%d")-deepspeed
+output_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM/examples/sttr/output/whisper-linear-llama3-$(date +"%Y%m%d")
+
+audio_root=/public/home/zhxgong/hxdou/0-Inbox/Data/en-de/v0
+ds_rate=5
 
 hydra_args="
 hydra.run.dir=$output_dir \
-++model_config.llm_name=vicuna-7b-v1.5 \
+++model_config.llm_name=gemma2b \
 ++model_config.llm_path=$llm_path \
-++model_config.llm_dim=4096 \
+++model_config.llm_dim=2048 \
 ++model_config.encoder_name=whisper \
-++model_config.encoder_projector_ds_rate=5 \
+++model_config.encoder_projector_ds_rate=$ds_rate \
 ++model_config.encoder_path=$speech_encoder_path \
 ++model_config.encoder_dim=1280 \
 ++model_config.encoder_projector=linear \
 ++dataset_config.dataset=speech_dataset \
-++dataset_config.train_data_path=data/librispeech/train960.jsonl \
-++dataset_config.val_data_path=data/librispeech/dev.jsonl \
+++dataset_config.train_data_path=$train_data_path \
+++dataset_config.val_data_path=$val_data_path \
 ++dataset_config.input_type=mel \
 ++dataset_config.mel_size=128 \
 ++train_config.model_name=asr \
-++train_config.num_epochs=6 \
+++train_config.num_epochs=5 \
 ++train_config.enable_deepspeed=true \
 ++train_config.freeze_encoder=true \
 ++train_config.freeze_llm=true \
@@ -53,6 +57,7 @@ hydra.run.dir=$output_dir \
 ++train_config.num_workers_dataloader=4 \
 ++train_config.output_dir=$output_dir \
 ++metric=acc \
+++train_config.use_peft=true \
 "
 # ++train_config.use_peft=true \
 # ++train_config.peft_config.r=32 \
@@ -73,6 +78,6 @@ deepspeed \
     --include localhost:4,5 \
     --master_port=29502 \
     $code_dir/deepspeed_finetune_asr.py \
-    $hydra_args
-    # --num_gpus=2 \
-    # --num_nodes=1 \
+    $hydra_args \
+     --num_gpus=2 \
+     --num_nodes=1
