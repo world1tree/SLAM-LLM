@@ -1,6 +1,6 @@
 #!/bin/bash
 # export PYTHONPATH=/root/fairseq:$PYTHONPATH
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1,2
 export TOKENIZERS_PARALLELISM=false
 # export CUDA_LAUNCH_BLOCKING=1
 export OMP_NUM_THREADS=1
@@ -15,10 +15,10 @@ cd $run_dir
 code_dir=examples/sttr
 
 speech_encoder_path=/public/home/zhxgong/.cache/whisper/large-v3.pt
-# llm_path=/public/home/zhxgong/mzlv/llama3/8B-Instruct
-llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
-train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-train.jsonl
-val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-valid.jsonl
+llm_path=/public/home/zhxgong/mzlv/llama3/8B-Instruct
+# llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
+train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-train.jsonl
+val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-valid.jsonl
 
 output_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM/examples/sttr/output/whisper-linear-llama3-$(date +"%Y%m%d")
 audio_root=/public/home/zhxgong/hxdou/0-Inbox/Data/en-de/v0
@@ -29,7 +29,7 @@ hydra_args="
 hydra.run.dir=$output_dir \
 ++model_config.llm_name=gemma2 \
 ++model_config.llm_path=$llm_path \
-++model_config.llm_dim=2048 \
+++model_config.llm_dim=4096 \
 ++model_config.encoder_name=whisper \
 ++model_config.encoder_projector_ds_rate=$ds_rate \
 ++model_config.encoder_path=$speech_encoder_path \
@@ -44,7 +44,7 @@ hydra.run.dir=$output_dir \
 ++dataset_config.audio_root=$audio_root \
 ++train_config.model_name=asr \
 ++train_config.num_epochs=3 \
-++train_config.gradient_accumulation_steps=8 \
+++train_config.gradient_accumulation_steps=1 \
 ++train_config.freeze_encoder=true \
 ++train_config.freeze_llm=true \
 ++train_config.use_peft=true \
@@ -54,8 +54,8 @@ hydra.run.dir=$output_dir \
 ++train_config.lr=1e-4 \
 ++train_config.validation_interval=10000 \
 ++train_config.batch_size_training=1 \
-++train_config.val_batch_size=2 \
-++train_config.num_workers_dataloader=2 \
+++train_config.val_batch_size=1 \
+++train_config.num_workers_dataloader=1 \
 ++train_config.output_dir=$output_dir \
 ++log_config.log_file=$output_dir/log.txt \
 ++metric=acc \
@@ -69,7 +69,7 @@ if [[ $CUDA_VISIBLE_DEVICES != *","* ]]; then
 else
     torchrun \
         --nnodes 1 \
-        --nproc_per_node 2 \
+        --nproc_per_node 3 \
         --master_port=29503 \
         $code_dir/finetune_sttr.py \
         --config-path "conf" \

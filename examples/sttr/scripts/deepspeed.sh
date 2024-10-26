@@ -1,7 +1,6 @@
 #!/bin/bash
 # export PYTHONPATH=/root/whisper:$PYTHONPATH
 #export PYTHONPATH=/root/fairseq:$PYTHONPATH
-export CUDA_VISIBLE_DEVICES=0,1
 export TOKENIZERS_PARALLELISM=false
 # export CUDA_LAUNCH_BLOCKING=1
 export OMP_NUM_THREADS=1
@@ -17,10 +16,11 @@ code_dir=examples/sttr
 
 speech_encoder_path=/public/home/zhxgong/.cache/whisper/large-v3.pt
 
-llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
+# llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
+llm_path=/public/home/zhxgong/mzlv/llama3/8B-Instruct
 # llm_path=/nfs/maziyang.mzy/models/vicuna-13b-v1.5
-train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-train.jsonl
-val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-valid.jsonl
+train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-task-train.jsonl
+val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-task-valid.jsonl
 
 output_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM/examples/sttr/output/whisper-linear-llama3-$(date +"%Y%m%d")
 
@@ -29,9 +29,9 @@ ds_rate=5
 
 hydra_args="
 hydra.run.dir=$output_dir \
-++model_config.llm_name=gemma2b \
+++model_config.llm_name=llama3-8b \
 ++model_config.llm_path=$llm_path \
-++model_config.llm_dim=2048 \
+++model_config.llm_dim=4096 \
 ++model_config.encoder_name=whisper \
 ++model_config.encoder_projector_ds_rate=$ds_rate \
 ++model_config.encoder_path=$speech_encoder_path \
@@ -42,6 +42,8 @@ hydra.run.dir=$output_dir \
 ++dataset_config.val_data_path=$val_data_path \
 ++dataset_config.input_type=mel \
 ++dataset_config.mel_size=128 \
+++dataset_config.audio_root=$audio_root \
+++dataset_config.ds_rate=$ds_rate \
 ++train_config.model_name=asr \
 ++train_config.num_epochs=5 \
 ++train_config.enable_deepspeed=true \
@@ -49,15 +51,18 @@ hydra.run.dir=$output_dir \
 ++train_config.freeze_llm=true \
 ++train_config.batching_strategy=custom \
 ++train_config.warmup_steps=1000 \
-++train_config.total_steps=100000 \
+++train_config.total_steps=200000 \
 ++train_config.lr=1e-4 \
-++train_config.validation_interval=1000 \
-++train_config.batch_size_training=4 \
-++train_config.val_batch_size=4 \
-++train_config.num_workers_dataloader=4 \
+++train_config.validation_interval=3000 \
+++train_config.batch_size_training=1 \
+++train_config.gradient_accumulation_steps=16 \
+++train_config.val_batch_size=1 \
+++train_config.num_workers_dataloader=3 \
 ++train_config.output_dir=$output_dir \
 ++metric=acc \
 ++train_config.use_peft=true \
+++log_config.log_file=$output_dir/log.txt \
+++deepspeed_config=examples/sttr/conf/ds_z2_config.json
 "
 # ++train_config.use_peft=true \
 # ++train_config.peft_config.r=32 \
@@ -74,10 +79,9 @@ hydra.run.dir=$output_dir \
 #++log_config.wandb_exp_name=${0##*/%.*} \
 #++log_config.log_interval 5 \
 
+
 deepspeed \
-    --include localhost:4,5 \
+    --include localhost:0,1,2 \
     --master_port=29502 \
     $code_dir/deepspeed_finetune_asr.py \
-    $hydra_args \
-     --num_gpus=2 \
-     --num_nodes=1
+    $hydra_args
