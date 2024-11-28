@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 
@@ -14,6 +15,12 @@ class EncoderProjectorConcat(nn.Module):
 
     def forward(self, x):
         batch_size, seq_len, dim = x.size()
+        if seq_len < self.k:
+            rp = math.ceil(self.k / seq_len)
+            x = x.repeat(1, rp, 1)
+
+        batch_size, seq_len, dim = x.size()
+        assert seq_len >= self.k
         num_frames_to_discard = seq_len % self.k
         if num_frames_to_discard > 0:
             x = x[:, :-num_frames_to_discard, :]
