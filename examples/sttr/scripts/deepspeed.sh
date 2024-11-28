@@ -19,10 +19,12 @@ speech_encoder_path=/public/home/zhxgong/.cache/whisper/large-v3.pt
 # llm_path=/public/home/zhxgong/hxdou/STTR/pretrained/gemma2b
 llm_path=/public/home/zhxgong/mzlv/llama3/8B-Instruct
 # llm_path=/nfs/maziyang.mzy/models/vicuna-13b-v1.5
-train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-task-train.jsonl
-val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-task-valid.jsonl
+# 确保数据量是原来的一半
+# train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-multi-task-train-split.jsonl
+train_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-train.jsonl
+val_data_path=/public/home/zhxgong/hxdou/STTR/data/sttr-valid.jsonl
 
-output_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM/examples/sttr/output/whisper-linear-llama3-$(date +"%Y%m%d")
+output_dir=/public/home/zhxgong/hxdou/STTR/SLAM-LLM/examples/sttr/output_bsz32/whisper-linear-llama3-$(date +"%Y%m%d")
 
 audio_root=/public/home/zhxgong/hxdou/0-Inbox/Data/en-de/v0
 ds_rate=5
@@ -53,11 +55,11 @@ hydra.run.dir=$output_dir \
 ++train_config.warmup_steps=1000 \
 ++train_config.total_steps=200000 \
 ++train_config.lr=1e-4 \
-++train_config.validation_interval=3000 \
+++train_config.validation_interval=5000 \
 ++train_config.batch_size_training=1 \
 ++train_config.gradient_accumulation_steps=16 \
 ++train_config.val_batch_size=1 \
-++train_config.num_workers_dataloader=3 \
+++train_config.num_workers_dataloader=1 \
 ++train_config.output_dir=$output_dir \
 ++metric=acc \
 ++train_config.use_peft=true \
@@ -81,7 +83,7 @@ hydra.run.dir=$output_dir \
 
 
 deepspeed \
-    --include localhost:0,1,2 \
+    --include localhost:0,1 \
     --master_port=29502 \
     $code_dir/deepspeed_finetune_asr.py \
     $hydra_args
