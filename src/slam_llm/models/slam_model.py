@@ -183,6 +183,13 @@ def setup_llm(train_config, model_config, **kwargs):
                 use_cache=use_cache,
                 low_cpu_mem_usage=True,
             )
+
+            if model_config.do_predict:
+                print("setting model half")
+                model.half()
+            else:
+                print("setting model full")
+
     if (train_config.enable_fsdp or train_config.enable_ddp) and train_config.use_fast_kernels:
         """
         For FSDP and FSDP+PEFT, setting 'use_fast_kernels' will enable

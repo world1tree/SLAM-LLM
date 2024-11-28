@@ -71,7 +71,8 @@ class STTRDatasetJsonl(torch.utils.data.Dataset):
         if self.input_type == "raw":
             audio_raw = torch.from_numpy(audio_raw)
             if self.normalize:
-                audio_raw = torch.nn.functional.layer_norm(audio_raw, audio_raw.shape)
+                with torch.no_grad():
+                    audio_raw = torch.nn.functional.layer_norm(audio_raw, audio_raw.shape)
             audio_length = len(audio_raw) // 320 # ad-hoc for fairseq 320x downsample
             audio_length = audio_length // self.ds_rate # ad-hoc for 5x fc downsample
         elif self.input_type == "mel":

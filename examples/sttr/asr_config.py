@@ -20,6 +20,9 @@ class ModelConfig:
     encoder_type: str = field(default="finetune", metadata={
         "help": "whether model is only pretrained or finetuned, used for models such as hubert"
     })
+    do_predict: Optional[bool] = field(default=False, metadata={
+        "help": "predict(load model in fp16 mode.)"
+    })
 
 @dataclass
 class PeftConfig:
